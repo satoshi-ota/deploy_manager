@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="debug" default="false"/>
+    <arg name="prefix" value="" unless="$(arg debug)"/>
+    <arg name="prefix" value="gdb -ex run --args" if="$(arg debug)"/>
+
+    <node name="deploy_manager_node" pkg="deploy_module" type="deploy_manager_node" output="screen">
+        <param name="unlock_load_th" value="-300000"/>
+        <param name="takedown_speed" value="255"/>
+        <param name="lift_up_speed" value="-255"/>
+    </node>
+
+</launch>
