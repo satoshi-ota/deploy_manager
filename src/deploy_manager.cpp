@@ -10,6 +10,8 @@ DeployManager::DeployManager()
     ros::NodeHandle nh;
     ros::NodeHandle private_nh("~");
 
+    private_nh.param("cmd_frequency", cmd_frequency_, 10);
+    private_nh.param("purge_timing", purge_timing_, 0.5);
     private_nh.param("unlock_load_th", unlock_load_th_, -50000);
     private_nh.param("takedown_speed", takedown_speed_, 255);
     private_nh.param("lift_up_speed", lift_up_speed_, -255);
@@ -31,6 +33,10 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
         return false;
     }
 
+    ros::Duration duration;
+    ros::Time timer_start = ros::Time::now(), timer_end;
+    ros::Rate rate(cmd_frequency_);
+
     ROS_INFO_NAMED("deploy_module","Service recieved deployment request. ");
 
     state_ = TAKEDOWN;
@@ -48,10 +54,13 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
                 {
                     if(unlock_load_th_ < load_){
 
-                        ros::Duration(0.5).sleep();
+                        ros::Duration(purge_timing_).sleep();
+
+                        timer_end = ros::Time::now();
+                        duration = timer_end - timer_start;
 
                         std_msgs::Int32 td_cmd_spd;
-                        td_cmd_spd.data = 0;
+                        td_cmd_spd.data = STOP_WINCH;
                         winch_cmd_pub_.publish(td_cmd_spd);
 
                         state_ = PURGE;
@@ -73,16 +82,26 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
                     unlock_cmd.data = true;
                     unlock_cmd_pub_.publish(unlock_cmd);
 
-                    res.success = true;
-                    return true;
+                    ros::Duration(purge_timing_).sleep();
+
+                    state_ = LIFTUP;
 
                     break;
                 }
 
             case LIFTUP:
                 {
+                    if(timer_end + ros::Duration(duration.toSec() / 2) < ros::Time::now()){
+
+                        resetState();
+
+                        ROS_INFO_NAMED("deploy_module","Lift up purge top board. ");
+                        res.success = true;
+                        return true;
+                    }
+
                     std_msgs::Int32 lu_cmd_spd;
-                    lu_cmd_spd.data = STOP_WINCH;
+                    lu_cmd_spd.data = lift_up_speed_;
                     winch_cmd_pub_.publish(lu_cmd_spd);
 
                     break;
@@ -94,8 +113,8 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
                 return false;
         }
 
-        ros::Duration(0.1).sleep();
         ros::spinOnce();
+        rate.sleep();
     }
 
     return true;
