@@ -12,7 +12,7 @@ DeployManager::DeployManager()
 
     private_nh.param("cmd_frequency", cmd_frequency_, 10);
     private_nh.param("purge_timing", purge_timing_, 0.5);
-    private_nh.param("unlock_load_th", unlock_load_th_, -500000.0);
+    private_nh.param("unlock_load_th", unlock_load_th_, -300000.0);
     private_nh.param("takedown_speed", takedown_speed_, 255);
     private_nh.param("lift_up_speed", lift_up_speed_, -255);
 
@@ -127,20 +127,20 @@ void DeployManager::commandCB(const geometry_msgs::WrenchStamped::ConstPtr& msg)
     ROS_INFO_ONCE_NAMED("deploy_module","Load cell data recieved. ");
 
     initialized_ = true;
-    load_ = msg->wrench.force.z;
+    load_ = (double)msg->wrench.force.z;
 }
 
 void DeployManager::resetState()
 {
     state_ = WAITING;
 
-    // std_msgs::Int32 td_cmd_spd;
-    // td_cmd_spd.data = STOP_WINCH;
-    // winch_cmd_pub_.publish(td_cmd_spd);
+    std_msgs::Int32 td_cmd_spd;
+    td_cmd_spd.data = STOP_WINCH;
+    winch_cmd_pub_.publish(td_cmd_spd);
 
-    std_msgs::Bool unlock_cmd;
-    unlock_cmd.data = false;
-    unlock_cmd_pub_.publish(unlock_cmd);
+    // std_msgs::Bool unlock_cmd;
+    // unlock_cmd.data = false;
+    // unlock_cmd_pub_.publish(unlock_cmd);
 
     ROS_INFO_NAMED("deploy_module","Reset deployment service. ");
 }
