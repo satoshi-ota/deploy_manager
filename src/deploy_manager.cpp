@@ -12,7 +12,7 @@ DeployManager::DeployManager()
 
     private_nh.param("cmd_frequency", cmd_frequency_, 10);
     private_nh.param("purge_timing", purge_timing_, 0.5);
-    private_nh.param("unlock_load_th", unlock_load_th_, -50000);
+    private_nh.param("unlock_load_th", unlock_load_th_, -500000.0);
     private_nh.param("takedown_speed", takedown_speed_, 255);
     private_nh.param("lift_up_speed", lift_up_speed_, -255);
 
@@ -84,6 +84,8 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
 
                     ros::Duration(purge_timing_).sleep();
 
+                    timer_end = ros::Time::now();
+
                     state_ = LIFTUP;
 
                     break;
@@ -91,7 +93,7 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
 
             case LIFTUP:
                 {
-                    if(timer_end + ros::Duration(duration.toSec() / 2) < ros::Time::now()){
+                    if(timer_end + ros::Duration(duration.toSec() - 2.0) < ros::Time::now()){
 
                         resetState();
 
@@ -132,9 +134,9 @@ void DeployManager::resetState()
 {
     state_ = WAITING;
 
-    std_msgs::Int32 td_cmd_spd;
-    td_cmd_spd.data = STOP_WINCH;
-    winch_cmd_pub_.publish(td_cmd_spd);
+    // std_msgs::Int32 td_cmd_spd;
+    // td_cmd_spd.data = STOP_WINCH;
+    // winch_cmd_pub_.publish(td_cmd_spd);
 
     std_msgs::Bool unlock_cmd;
     unlock_cmd.data = false;

@@ -41,9 +41,9 @@ private:
 
     DeployState state_;
 
-    int load_;
+    double load_;
     int cmd_frequency_;
-    int unlock_load_th_;
+    double unlock_load_th_;
     int takedown_speed_;
     int lift_up_speed_;
     double purge_timing_;
