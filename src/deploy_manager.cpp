@@ -52,7 +52,7 @@ bool DeployManager::deploy(std_srvs::Trigger::Request  &req,
 
             case TAKEDOWN:
                 {
-                    if(unlock_load_th_ < load_){
+                    if(load_ < unlock_load_th_){
 
                         ros::Duration(purge_timing_).sleep();
 
